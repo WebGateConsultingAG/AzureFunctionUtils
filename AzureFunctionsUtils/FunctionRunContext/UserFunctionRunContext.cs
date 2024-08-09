@@ -77,6 +77,9 @@ public class UserFunctionRunContext : FunctionRunContext
             return null;
         }
     }
+    public ClaimsPrincipal? GetClaimsPrincipal() {
+        return _principal;
+    }
 }
 
 public class ClientPrincipalClaim
