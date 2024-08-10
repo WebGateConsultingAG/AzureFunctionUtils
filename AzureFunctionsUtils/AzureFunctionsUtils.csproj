@@ -5,7 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <PackageId>WebGate.Azure.FunctionsUtils</PackageId>
-    <Version>0.1.0-alpha-2</Version>
+    <Version>0.1.0-alpha-3</Version>
     <Authors>guedeWebGate</Authors>
     <Company>WebGate Consulting AG</Company>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
