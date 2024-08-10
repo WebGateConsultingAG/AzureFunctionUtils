@@ -42,6 +42,15 @@ public class UserFunctionRunContext : FunctionRunContext
                     _userId = userId;
                     _authenticated = true;
                 }
+                else
+                {
+                    userId = _principal.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")?.Value;
+                    if (!string.IsNullOrEmpty(userId))
+                    {
+                        _userId = userId;
+                        _authenticated = true;
+                    }
+                }
                 _upn = _principal.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/upn")?.Value;
                 _roles = _principal.Claims.Where(e => e.Type == "roles").Select(e => e.Value);
             }
@@ -77,7 +86,8 @@ public class UserFunctionRunContext : FunctionRunContext
             return null;
         }
     }
-    public ClaimsPrincipal? GetClaimsPrincipal() {
+    public ClaimsPrincipal? GetClaimsPrincipal()
+    {
         return _principal;
     }
 }
