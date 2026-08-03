@@ -1,120 +1,25 @@
-using Microsoft.AspNetCore.Http;
 using System.Security.Claims;
-using System.Text;
-using System.Text.Json;
-using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Http;
+using WebGate.Azure.FunctionsUtils.Internal;
 
 namespace WebGate.Azure.FunctionsUtils;
 
 public class UserFunctionRunContext : FunctionRunContext
 {
-    private ClaimsPrincipal? _principal;
+    private readonly ClaimsPrincipal? _principal;
 
     public UserFunctionRunContext(HttpRequest request) : base(FunctionRunContextType.USER)
     {
         _request = request;
-        string? env = GetEnvironmentVariable("AZURE_FUNCTIONS_ENVIRONMENT");
-        bool isDevSet = string.IsNullOrEmpty(GetEnvironmentVariable("IS_NOT_DEV"));
+        _isDev = IsLocalDevelopmentEnvironment();
 
-        if (env == "Development" && isDevSet)
-        {
-            _isDev = true;
-            string? envUserId = GetEnvironmentVariable("DEV_USER_ID");
-            string? rolesByEnvironment = GetEnvironmentVariable("DEV_USER_ROLES");
-            if (string.IsNullOrEmpty(envUserId))
-            {
-                _userId = "LocalDev";
-            }
-            else
-            {
-                _userId = envUserId;
-            }
-            _authenticated = true;
-            string[] allRoles = rolesByEnvironment != null ? rolesByEnvironment.Split(",") : ["admin"];
-            _roles = new List<string>(allRoles);
-        }
-        else
-        {
-            _principal = CheckInitializeClaimsPrincipal();
-            if (_principal != null)
-            {
-                string? userId = _principal.FindFirst("http://schemas.microsoft.com/identity/claims/objectidentifier")?.Value;
-                if (!string.IsNullOrEmpty(userId))
-                {
-                    _userId = userId;
-                    _authenticated = true;
-                }
-                else
-                {
-                    userId = _principal.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")?.Value;
-                    if (!string.IsNullOrEmpty(userId))
-                    {
-                        _userId = userId;
-                        _authenticated = true;
-                    }
-                }
-                _upn = _principal.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/upn")?.Value;
-                _roles = _principal.Claims.Where(e => e.Type == "roles").Select(e => e.Value);
-            }
-            else
-            {
-                _authenticated = false;
-            }
-        }
+        var identity = ClaimsPrincipalResolver.Resolve(request);
+        _principal = identity.Principal;
+        _userId = identity.UserId;
+        _upn = identity.Upn;
+        _roles = identity.Roles;
+        _authenticated = identity.IsAuthenticated;
     }
 
-    private ClaimsPrincipal? CheckInitializeClaimsPrincipal()
-    {
-        if (_request != null && _request.Headers.TryGetValue("x-ms-client-principal", out var header))
-        {
-            var data = header.First();
-            var decoded = Convert.FromBase64String(data!);
-            var json = Encoding.UTF8.GetString(decoded);
-            var clientPrincipal = JsonSerializer.Deserialize<ClientPrincipal>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-
-            if (clientPrincipal != null)
-            {
-                var identity = new ClaimsIdentity(clientPrincipal.IdentityProvider);
-                foreach (var claimId in clientPrincipal.Claims!)
-                {
-                    identity.AddClaim(new Claim(claimId.Type!, claimId.Value!));
-                }
-                return new ClaimsPrincipal(identity);
-            }
-            return null;
-        }
-        else
-        {
-            return null;
-        }
-    }
-
-    public ClaimsPrincipal? GetClaimsPrincipal()
-    {
-        return _principal;
-    }
-}
-
-public class ClientPrincipalClaim
-{
-    [JsonPropertyName("typ")]
-    public string? Type { get; set; }
-
-    [JsonPropertyName("val")]
-    public string? Value { get; set; }
-}
-
-public class ClientPrincipal
-{
-    [JsonPropertyName("auth_typ")]
-    public string? IdentityProvider { get; set; }
-
-    [JsonPropertyName("name_typ")]
-    public string? NameClaimType { get; set; }
-
-    [JsonPropertyName("role_typ")]
-    public string? RoleClaimType { get; set; }
-
-    [JsonPropertyName("claims")]
-    public IEnumerable<ClientPrincipalClaim>? Claims { get; set; }
+    public ClaimsPrincipal? GetClaimsPrincipal() => _principal;
 }

@@ -6,12 +6,7 @@ public class AppFunctionRunContext : FunctionRunContext
     {
         _userId = applicationId;
         _roles = roles;
-        string? env = GetEnvironmentVariable("AZURE_FUNCTIONS_ENVIRONMENT");
-        bool isDevSet = string.IsNullOrEmpty(GetEnvironmentVariable("IS_NOT_DEV"));
-
-        if (env == "Development" && isDevSet)
-        {
-            _isDev = true;
-        }
+        _authenticated = !string.IsNullOrWhiteSpace(applicationId);
+        _isDev = IsLocalDevelopmentEnvironment();
     }
 }

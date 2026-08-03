@@ -13,7 +13,7 @@
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
-    <Description>Helpers for Azure Functions: FunctionRunContext extracts Easy Auth / client-principal claims from HttpRequest and exposes user identity, UPN, roles, authentication state, and local-dev overrides.</Description>
+    <Description>Helpers for Azure Functions: FunctionRunContext extracts claims from Easy Auth (production) and validated Bearer JWTs (development) and exposes user identity, UPN, roles, and authentication state.</Description>
     <Copyright>WebGate Consulting AG</Copyright>
     <PackageTags>Azure;Azure Functions;Easy Auth;Claims;FunctionRunContext</PackageTags>
     <IncludeSymbols>true</IncludeSymbols>
@@ -29,6 +29,11 @@
 
   <ItemGroup>
     <None Include="..\README.md" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="8.22.0" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.22.0" />
   </ItemGroup>
 
 </Project>
