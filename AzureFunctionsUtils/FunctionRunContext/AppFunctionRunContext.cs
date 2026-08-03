@@ -1,8 +1,9 @@
 namespace WebGate.Azure.FunctionsUtils;
 
-public class AppFunctionRunContext:FunctionRunContext {
-    
-    public AppFunctionRunContext(string applicationId, string[] roles):base(FunctionRunContextType.APPLICATION) {
+public class AppFunctionRunContext : FunctionRunContext
+{
+    public AppFunctionRunContext(string applicationId, string[] roles) : base(FunctionRunContextType.APPLICATION)
+    {
         _userId = applicationId;
         _roles = roles;
         string? env = GetEnvironmentVariable("AZURE_FUNCTIONS_ENVIRONMENT");

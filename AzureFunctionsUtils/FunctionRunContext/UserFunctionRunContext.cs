@@ -1,13 +1,15 @@
+using Microsoft.AspNetCore.Http;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Microsoft.AspNetCore.Http;
 
 namespace WebGate.Azure.FunctionsUtils;
+
 public class UserFunctionRunContext : FunctionRunContext
 {
     private ClaimsPrincipal? _principal;
+
     public UserFunctionRunContext(HttpRequest request) : base(FunctionRunContextType.USER)
     {
         _request = request;
@@ -60,6 +62,7 @@ public class UserFunctionRunContext : FunctionRunContext
             }
         }
     }
+
     private ClaimsPrincipal? CheckInitializeClaimsPrincipal()
     {
         if (_request != null && _request.Headers.TryGetValue("x-ms-client-principal", out var header))
@@ -75,7 +78,6 @@ public class UserFunctionRunContext : FunctionRunContext
                 foreach (var claimId in clientPrincipal.Claims!)
                 {
                     identity.AddClaim(new Claim(claimId.Type!, claimId.Value!));
-
                 }
                 return new ClaimsPrincipal(identity);
             }
@@ -86,6 +88,7 @@ public class UserFunctionRunContext : FunctionRunContext
             return null;
         }
     }
+
     public ClaimsPrincipal? GetClaimsPrincipal()
     {
         return _principal;
@@ -96,6 +99,7 @@ public class ClientPrincipalClaim
 {
     [JsonPropertyName("typ")]
     public string? Type { get; set; }
+
     [JsonPropertyName("val")]
     public string? Value { get; set; }
 }
@@ -104,10 +108,13 @@ public class ClientPrincipal
 {
     [JsonPropertyName("auth_typ")]
     public string? IdentityProvider { get; set; }
+
     [JsonPropertyName("name_typ")]
     public string? NameClaimType { get; set; }
+
     [JsonPropertyName("role_typ")]
     public string? RoleClaimType { get; set; }
+
     [JsonPropertyName("claims")]
     public IEnumerable<ClientPrincipalClaim>? Claims { get; set; }
 }

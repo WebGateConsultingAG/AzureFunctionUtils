@@ -7,6 +7,7 @@ public enum FunctionRunContextType
     USER,
     APPLICATION
 }
+
 public abstract class FunctionRunContext(FunctionRunContextType functionRunContextType) : IFunctionRunContext
 {
     public FunctionRunContextType FunctionRunContextType { get; } = functionRunContextType;
@@ -38,6 +39,7 @@ public abstract class FunctionRunContext(FunctionRunContextType functionRunConte
     {
         return _userId;
     }
+
     public string? GetUPN()
     {
         return _upn;
