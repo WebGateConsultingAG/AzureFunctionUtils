@@ -1,2 +1,5 @@
-AzureFunctionsUtils/bin
-AzureFunctionsUtils/obj
+AzureFunctionsUtils/bin/
+AzureFunctionsUtils/obj/
+.vs/
+*.user
+*.suo
