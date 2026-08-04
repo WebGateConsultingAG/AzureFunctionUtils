@@ -20,6 +20,11 @@ internal static class BearerJwtClaimsPrincipalParser
 
     public static ClaimsPrincipal? TryParse(HttpRequest request)
     {
+        if (!AzureFunctionsEnvironment.IsLocalDevelopment())
+        {
+            return null;
+        }
+
         if (!TryGetBearerToken(request, out var token))
         {
             return null;
@@ -44,7 +49,7 @@ internal static class BearerJwtClaimsPrincipalParser
                     $"https://sts.windows.net/{tenantId}/"
                 ],
                 ValidateAudience = true,
-                ValidAudiences = [audience],
+                ValidAudiences = BuildValidAudiences(audience),
                 ValidateIssuerSigningKey = true,
                 IssuerSigningKeys = openIdConfig.SigningKeys,
                 ValidateLifetime = true,
@@ -83,6 +88,22 @@ internal static class BearerJwtClaimsPrincipalParser
 
         token = authorization[(separatorIndex + 1)..].Trim();
         return token.Length > 0;
+    }
+
+    private static string[] BuildValidAudiences(string audience)
+    {
+        var audiences = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { audience };
+
+        if (audience.StartsWith("api://", StringComparison.OrdinalIgnoreCase))
+        {
+            audiences.Add(audience["api://".Length..]);
+        }
+        else
+        {
+            audiences.Add($"api://{audience}");
+        }
+
+        return [.. audiences];
     }
 
     private static OpenIdConnectConfiguration GetOpenIdConnectConfiguration(string tenantId)
