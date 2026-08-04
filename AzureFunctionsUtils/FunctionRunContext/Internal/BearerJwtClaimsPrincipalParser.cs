@@ -16,7 +16,9 @@ internal static class BearerJwtClaimsPrincipalParser
     private const string AUDIENCE_VARIABLE = "FUNCTIONS_UTILS_AAD_AUDIENCE";
 
     private static readonly ConcurrentDictionary<string, ConfigurationManager<OpenIdConnectConfiguration>> ConfigurationManagers = new();
-    private static readonly JwtSecurityTokenHandler TokenHandler = new();
+
+    // Keep JWT claim types as short names (oid, roles, ...) so resolution matches Easy Auth.
+    private static readonly JwtSecurityTokenHandler TokenHandler = new() { MapInboundClaims = false };
 
     public static ClaimsPrincipal? TryParse(HttpRequest request)
     {

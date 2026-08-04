@@ -22,6 +22,8 @@ internal static class ClaimsPrincipalResolver
     private const string UPN_CLAIM_URI = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/upn";
     private const string PREFERRED_USERNAME_CLAIM = "preferred_username";
     private const string ROLES_CLAIM = "roles";
+    private const string UNIQUE_NAME_CLAIM = "unique_name";
+    private const string EMAIL_CLAIM = "email";
 
     public static ResolvedIdentity Resolve(HttpRequest request)
     {
@@ -49,9 +51,21 @@ internal static class ClaimsPrincipalResolver
                 principal,
                 UPN_CLAIM,
                 UPN_CLAIM_URI,
-                PREFERRED_USERNAME_CLAIM),
-            Roles = principal.FindAll(ROLES_CLAIM).Select(claim => claim.Value).ToArray()
+                PREFERRED_USERNAME_CLAIM,
+                UNIQUE_NAME_CLAIM,
+                EMAIL_CLAIM),
+            Roles = FindAllClaimValues(principal, ROLES_CLAIM, ClaimTypes.Role)
         };
+    }
+
+    private static string[] FindAllClaimValues(ClaimsPrincipal principal, params string[] claimTypes)
+    {
+        return claimTypes
+            .SelectMany(claimType => principal.FindAll(claimType))
+            .Select(claim => claim.Value)
+            .Where(value => !string.IsNullOrWhiteSpace(value))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
     }
 
     private static string? FindFirstClaimValue(ClaimsPrincipal principal, params string[] claimTypes)

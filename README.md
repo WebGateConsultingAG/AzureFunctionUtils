@@ -105,11 +105,13 @@ Identity is resolved in this order:
 
 Claim mapping:
 
-| Field | Claims (first match wins) |
+| Field | Claims (first match wins; roles collect all matches) |
 |---|---|
 | User ID | `oid`, Easy Auth object identifier URI, `sub`, name identifier URI |
-| UPN | `upn`, Easy Auth UPN URI, `preferred_username` |
-| Roles | `roles` |
+| UPN | `upn`, Easy Auth UPN URI, `preferred_username`, `unique_name`, `email` |
+| Roles | `roles`, `http://schemas.microsoft.com/ws/2008/06/identity/claims/role` |
+
+Local Bearer JWTs keep short claim names (`MapInboundClaims = false`) so they align with Easy Auth. The long role URI remains a fallback.
 
 Authenticated is `true` when a user ID was resolved.
 
