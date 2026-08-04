@@ -2,18 +2,16 @@ namespace WebGate.Azure.FunctionsUtils.Internal;
 
 internal static class AzureFunctionsEnvironment
 {
-    private const string AZURE_FUNCTIONS_ENVIRONMENT_VARIABLE = "AZURE_FUNCTIONS_ENVIRONMENT";
-    private const string LOCAL_DEVELOPMENT_ENVIRONMENT_NAME = "LocalDevelopment";
+    private const string LOCAL_DEVELOPMENT_VARIABLE = "FUNCTIONS_UTILS_LOCAL_DEVELOPMENT";
 
     /// <summary>
-    /// True when functions run on a developer machine.
-    /// Azure cloud environments use other values (e.g. Development, Staging, Production).
+    /// True when <c>FUNCTIONS_UTILS_LOCAL_DEVELOPMENT</c> is exactly <c>true</c> (case-insensitive).
+    /// Set only in local.settings.json — never in Azure.
+    /// Enables <see cref="IsDev"/> and Bearer JWT validation.
     /// </summary>
     public static bool IsLocalDevelopment()
     {
-        return string.Equals(
-            Environment.GetEnvironmentVariable(AZURE_FUNCTIONS_ENVIRONMENT_VARIABLE, EnvironmentVariableTarget.Process),
-            LOCAL_DEVELOPMENT_ENVIRONMENT_NAME,
-            StringComparison.OrdinalIgnoreCase);
+        var value = Environment.GetEnvironmentVariable(LOCAL_DEVELOPMENT_VARIABLE, EnvironmentVariableTarget.Process);
+        return string.Equals(value, "true", StringComparison.OrdinalIgnoreCase);
     }
 }

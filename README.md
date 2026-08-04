@@ -25,17 +25,28 @@ Within a major line, use minor/patch for library changes that stay on the same T
 
 ---
 
-## Environments
+## Local development flag
 
-`AZURE_FUNCTIONS_ENVIRONMENT` distinguishes **where** the functions run:
+Local vs cloud is controlled by one setting:
 
-| Value | Meaning | Auth behavior | `IsDev()` |
-|---|---|---|---|
-| `LocalDevelopment` | Functions on a developer machine | Easy Auth if present, otherwise validated Bearer JWT | `true` |
-| `Development` | Azure cloud **DEV** environment | Easy Auth only | `false` |
-| `Staging` / `Production` / other | Azure cloud environments | Easy Auth only | `false` |
+| Variable | Value | Effect |
+|---|---|---|
+| `FUNCTIONS_UTILS_LOCAL_DEVELOPMENT` | `true` | `IsDev() == true`, Bearer JWT allowed |
+| unset / other | — | Cloud mode: Easy Auth only, no Bearer |
 
-Important: Azure’s usual `Development` value means the cloud DEV slot, **not** local execution. For local runs set `AZURE_FUNCTIONS_ENVIRONMENT=LocalDevelopment` in `local.settings.json`.
+Set it **only** in `local.settings.json`. Do not set it in Azure App Settings.
+
+```json
+{
+  "Values": {
+    "FUNCTIONS_UTILS_LOCAL_DEVELOPMENT": "true",
+    "FUNCTIONS_UTILS_AAD_TENANT_ID": "{tenant-id}",
+    "FUNCTIONS_UTILS_AAD_AUDIENCE": "api://{api-app-id}"
+  }
+}
+```
+
+Do not use `AZURE_FUNCTIONS_ENVIRONMENT` for this — Core Tools overwrites it to `Development`.
 
 ---
 
@@ -47,45 +58,21 @@ Headers alone are not trusted. Protect cloud Function Apps like this:
 Internet → Azure API Management (validate-jwt) → Function App (Easy Auth Required) → UserFunctionRunContext
 ```
 
-1. **Easy Auth required (cloud environments)**  
-   On the Function App, enable App Service Authentication / Easy Auth and set unauthenticated requests to **Return HTTP 401**. Easy Auth strips client-supplied `x-ms-client-principal*` headers and replaces them after a successful Entra ID login.  
-   Whenever the environment is **not** `LocalDevelopment`, this library accepts **only** Easy Auth (`x-ms-client-principal`). Bearer fallback is disabled.
+1. **Easy Auth required (cloud)**  
+   Enable App Service Authentication / Easy Auth and set unauthenticated requests to **Return HTTP 401**. Without `FUNCTIONS_UTILS_LOCAL_DEVELOPMENT`, this library accepts **only** Easy Auth (`x-ms-client-principal`).
 
 2. **Do not expose the Function App publicly**  
-   Prefer private networking and put **Azure API Management** in front. Use an APIM `validate-jwt` policy against Entra ID (issuer, audience, signing keys) before traffic reaches the Function App.
+   Prefer private networking and put **Azure API Management** in front with `validate-jwt`.
 
-   Example APIM fragment:
-
-   ```xml
-   <validate-jwt header-name="Authorization" failed-validation-httpcode="401">
-     <openid-config url="https://login.microsoftonline.com/{tenant-id}/v2.0/.well-known/openid-configuration" />
-     <audiences>
-       <audience>{api-app-id-or-uri}</audience>
-     </audiences>
-   </validate-jwt>
-   ```
-
-3. **Bearer JWT cryptographic validation (`LocalDevelopment` only)**  
-   On a developer machine (`AZURE_FUNCTIONS_ENVIRONMENT=LocalDevelopment`), if Easy Auth is absent, the library may fall back to `Authorization: Bearer`. That token is validated (signature, issuer, audience, lifetime) via Entra OpenID metadata — decode-only is not used.
-
-   Example `local.settings.json`:
-
-   ```json
-   {
-     "Values": {
-       "AZURE_FUNCTIONS_ENVIRONMENT": "LocalDevelopment",
-       "FUNCTIONS_UTILS_AAD_TENANT_ID": "{tenant-id}",
-       "FUNCTIONS_UTILS_AAD_AUDIENCE": "{api-app-id-or-uri}"
-     }
-   }
-   ```
+3. **Bearer JWT (local only)**  
+   When `FUNCTIONS_UTILS_LOCAL_DEVELOPMENT=true` and Easy Auth is absent, `Authorization: Bearer` is validated (signature, issuer, audience, lifetime) via Entra OpenID metadata.
 
    | Variable | Purpose |
    |---|---|
    | `FUNCTIONS_UTILS_AAD_TENANT_ID` | Entra tenant ID |
-   | `FUNCTIONS_UTILS_AAD_AUDIENCE` | API audience (app ID or Application ID URI) |
+   | `FUNCTIONS_UTILS_AAD_AUDIENCE` | API audience (GUID or `api://{app-id}`; both accepted) |
 
-   If either variable is missing, Bearer fallback fails closed (`IsAuthenticated() == false`).
+   If tenant/audience are missing, Bearer fails closed. The SPA must send an API access token (Expose an API), e.g. MSAL scope `api://{clientId}/access_as_user`.
 
 ---
 
@@ -107,14 +94,14 @@ Shared API (`IFunctionRunContext`):
 - `GetEnvironmentVariable(name)`
 
 `UserFunctionRunContext` also exposes `GetClaimsPrincipal()`.  
-`IsDev()` follows the [Environments](#environments) table (`LocalDevelopment` only).
+`IsDev()` is `true` when `FUNCTIONS_UTILS_LOCAL_DEVELOPMENT` is enabled.
 
 ### UserFunctionRunContext
 
 Identity is resolved in this order:
 
 1. Azure Easy Auth payload from `x-ms-client-principal` (all environments)
-2. Validated JWT from `Authorization: Bearer <token>` (`LocalDevelopment` only; requires tenant/audience env vars)
+2. Validated JWT from `Authorization: Bearer <token>` (only when `FUNCTIONS_UTILS_LOCAL_DEVELOPMENT=true`)
 
 Claim mapping:
 
