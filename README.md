@@ -51,6 +51,8 @@ Set it **only** in `local.settings.json`. Do not set it in Azure App Settings.
 
 Do not use `AZURE_FUNCTIONS_ENVIRONMENT` for this — Core Tools overwrites it to `Development`.
 
+**Agent / Security:** [AGENTS.md](./AGENTS.md) · Skill `@security-audit-function-utils` for auth/JWT reviews before merge.
+
 ---
 
 ## Security model

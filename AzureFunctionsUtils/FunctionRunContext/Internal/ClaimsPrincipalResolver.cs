@@ -12,6 +12,13 @@ internal sealed class ResolvedIdentity
     public bool IsAuthenticated => !string.IsNullOrWhiteSpace(UserId);
 }
 
+/// <summary>
+/// Resolves <see cref="ClaimsPrincipal"/> and mapped identity fields from HTTP request headers.
+/// </summary>
+/// <remarks>
+/// Cloud: Easy Auth only. Local dev (<see cref="AzureFunctionsEnvironment.IsLocalDevelopment"/>):
+/// Easy Auth first, then API Bearer JWT, then SPA ID token JWT. No merging of principals.
+/// </remarks>
 internal static class ClaimsPrincipalResolver
 {
     private const string OBJECT_ID_CLAIM = "oid";
@@ -25,6 +32,7 @@ internal static class ClaimsPrincipalResolver
     private const string UNIQUE_NAME_CLAIM = "unique_name";
     private const string EMAIL_CLAIM = "email";
 
+    /// <summary>Maps request headers to user id, UPN, and roles; returns empty identity when nothing valid is found.</summary>
     public static ResolvedIdentity Resolve(HttpRequest request)
     {
         var principal = EasyAuthClaimsPrincipalParser.TryParse(request);

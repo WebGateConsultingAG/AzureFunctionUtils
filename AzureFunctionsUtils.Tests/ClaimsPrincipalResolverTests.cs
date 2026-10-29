@@ -6,6 +6,7 @@ using Xunit;
 
 namespace AzureFunctionsUtils.Tests;
 
+[Collection(nameof(EnvironmentVariablesCollection))]
 public class EasyAuthClaimsPrincipalParserTests
 {
     [Fact]
@@ -35,12 +36,15 @@ public class EasyAuthClaimsPrincipalParserTests
     }
 }
 
+[Collection(nameof(EnvironmentVariablesCollection))]
 public class ClaimsPrincipalResolverTests
 {
     [Fact]
     public void Resolve_withoutAuthHeaders_returnsUnauthenticatedIdentity()
     {
-        Environment.SetEnvironmentVariable("FUNCTIONS_UTILS_LOCAL_DEVELOPMENT", null);
+        using var local = new EnvironmentVariableRestore(
+            AzureFunctionsEnvironmentTests.LocalDevelopmentVariable,
+            null);
 
         var context = new DefaultHttpContext();
         var resolved = ClaimsPrincipalResolver.Resolve(context.Request);

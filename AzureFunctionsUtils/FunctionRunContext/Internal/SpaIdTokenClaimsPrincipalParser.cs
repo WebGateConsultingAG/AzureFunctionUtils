@@ -6,6 +6,10 @@ namespace WebGate.Azure.FunctionsUtils.Internal;
 /// <summary>
 /// Local development: validates SPA ID tokens (audience = SPA client id) when API access tokens are not sent.
 /// </summary>
+/// <remarks>
+/// Runs only after <see cref="BearerJwtClaimsPrincipalParser"/> returns null.
+/// Requires <see cref="LocalEntraJwtEnvironment.SpaClientIdVariable"/> and tenant id.
+/// </remarks>
 internal static class SpaIdTokenClaimsPrincipalParser
 {
     public static ClaimsPrincipal? TryParse(HttpRequest request)

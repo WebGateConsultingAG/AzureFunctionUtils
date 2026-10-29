@@ -2,6 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace WebGate.Azure.FunctionsUtils.Internal;
 
+/// <summary>Single claim entry in an App Service Easy Auth <c>x-ms-client-principal</c> payload.</summary>
 internal sealed class ClientPrincipalClaim
 {
     [JsonPropertyName("typ")]
@@ -11,6 +12,7 @@ internal sealed class ClientPrincipalClaim
     public string? Value { get; set; }
 }
 
+/// <summary>Deserialized Easy Auth client principal JSON (Azure Functions header).</summary>
 internal sealed class ClientPrincipal
 {
     [JsonPropertyName("auth_typ")]

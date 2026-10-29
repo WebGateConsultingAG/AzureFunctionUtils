@@ -16,6 +16,13 @@ public class UserFunctionRunContext : FunctionRunContext
 
     private readonly ClaimsPrincipal? _principal;
 
+    /// <summary>
+    /// Resolves user identity from the request (Easy Auth, then local JWT when enabled).
+    /// </summary>
+    /// <param name="request">Incoming HTTP request.</param>
+    /// <remarks>
+    /// Prefer <see cref="ForRequest"/> when the same request is processed more than once to avoid duplicate JWT validation.
+    /// </remarks>
     public UserFunctionRunContext(HttpRequest request) : base(FunctionRunContextType.USER)
     {
         _request = request;
@@ -53,5 +60,9 @@ public class UserFunctionRunContext : FunctionRunContext
         return context;
     }
 
+    /// <summary>
+    /// Returns the validated claims principal when Easy Auth or local JWT resolution succeeded; otherwise null.
+    /// </summary>
+    /// <remarks>Use for advanced claim access; authorization should still use <see cref="FunctionRunContext.IsAuthenticated"/> and role helpers.</remarks>
     public ClaimsPrincipal? GetClaimsPrincipal() => _principal;
 }
