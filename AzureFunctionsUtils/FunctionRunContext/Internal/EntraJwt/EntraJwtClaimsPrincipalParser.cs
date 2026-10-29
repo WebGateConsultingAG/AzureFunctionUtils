@@ -6,35 +6,40 @@ using Microsoft.IdentityModel.Protocols;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Microsoft.IdentityModel.Tokens;
 
-namespace WebGate.Azure.FunctionsUtils.Internal;
+namespace WebGate.Azure.FunctionsUtils.Internal.EntraJwt;
 
-internal static class BearerJwtClaimsPrincipalParser
+/// <summary>
+/// Validates Entra-issued Bearer JWTs (API access token or SPA ID token) for local development.
+/// </summary>
+/// <remarks>
+/// OpenID metadata is fetched synchronously on first validation per tenant and cached in-process.
+/// Prefer keeping the Functions worker warm in local dev to avoid cold-start latency on the first Bearer call.
+/// </remarks>
+internal static class EntraJwtClaimsPrincipalParser
 {
     private const string AUTHORIZATION_HEADER = "Authorization";
     private const string BEARER_SCHEME = "Bearer";
-    private const string TENANT_ID_VARIABLE = "FUNCTIONS_UTILS_AAD_TENANT_ID";
-    private const string AUDIENCE_VARIABLE = "FUNCTIONS_UTILS_AAD_AUDIENCE";
 
     private static readonly ConcurrentDictionary<string, ConfigurationManager<OpenIdConnectConfiguration>> ConfigurationManagers = new();
 
     // Keep JWT claim types as short names (oid, roles, ...) so resolution matches Easy Auth.
     private static readonly JwtSecurityTokenHandler TokenHandler = new() { MapInboundClaims = false };
 
-    public static ClaimsPrincipal? TryParse(HttpRequest request)
+    /// <summary>
+    /// Validates the Bearer token against Entra signing keys, issuer, lifetime, and the given audiences.
+    /// </summary>
+    /// <param name="request">HTTP request; only <c>Authorization: Bearer</c> is considered.</param>
+    /// <param name="tenantId">Entra tenant GUID for metadata and issuer validation.</param>
+    /// <param name="validAudiences">One or more accepted <c>aud</c> values (use <see cref="BuildValidAudiences"/> for API resource ids).</param>
+    /// <returns>Authenticated principal, or null on missing input, validation failure, or OIDC errors (fail closed).</returns>
+    internal static ClaimsPrincipal? TryParse(HttpRequest request, string tenantId, string[] validAudiences)
     {
-        if (!AzureFunctionsEnvironment.IsLocalDevelopment())
+        if (string.IsNullOrWhiteSpace(tenantId) || validAudiences is not { Length: > 0 })
         {
             return null;
         }
 
         if (!TryGetBearerToken(request, out var token))
-        {
-            return null;
-        }
-
-        var tenantId = Environment.GetEnvironmentVariable(TENANT_ID_VARIABLE, EnvironmentVariableTarget.Process);
-        var audience = Environment.GetEnvironmentVariable(AUDIENCE_VARIABLE, EnvironmentVariableTarget.Process);
-        if (string.IsNullOrWhiteSpace(tenantId) || string.IsNullOrWhiteSpace(audience))
         {
             return null;
         }
@@ -51,7 +56,7 @@ internal static class BearerJwtClaimsPrincipalParser
                     $"https://sts.windows.net/{tenantId}/"
                 ],
                 ValidateAudience = true,
-                ValidAudiences = BuildValidAudiences(audience),
+                ValidAudiences = validAudiences,
                 ValidateIssuerSigningKey = true,
                 IssuerSigningKeys = openIdConfig.SigningKeys,
                 ValidateLifetime = true,
@@ -64,6 +69,27 @@ internal static class BearerJwtClaimsPrincipalParser
         {
             return null;
         }
+    }
+
+    /// <summary>
+    /// Builds the audience set Entra may emit for an exposed API (<c>api://{id}</c> and bare application id).
+    /// </summary>
+    /// <param name="audience">Configured audience or SPA client id from environment.</param>
+    /// <returns>Two distinct values (case-insensitive) covering both common <c>aud</c> formats.</returns>
+    internal static string[] BuildValidAudiences(string audience)
+    {
+        var audiences = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { audience };
+
+        if (audience.StartsWith("api://", StringComparison.OrdinalIgnoreCase))
+        {
+            audiences.Add(audience["api://".Length..]);
+        }
+        else
+        {
+            audiences.Add($"api://{audience}");
+        }
+
+        return [.. audiences];
     }
 
     private static bool TryGetBearerToken(HttpRequest request, out string token)
@@ -90,22 +116,6 @@ internal static class BearerJwtClaimsPrincipalParser
 
         token = authorization[(separatorIndex + 1)..].Trim();
         return token.Length > 0;
-    }
-
-    private static string[] BuildValidAudiences(string audience)
-    {
-        var audiences = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { audience };
-
-        if (audience.StartsWith("api://", StringComparison.OrdinalIgnoreCase))
-        {
-            audiences.Add(audience["api://".Length..]);
-        }
-        else
-        {
-            audiences.Add($"api://{audience}");
-        }
-
-        return [.. audiences];
     }
 
     private static OpenIdConnectConfiguration GetOpenIdConnectConfiguration(string tenantId)

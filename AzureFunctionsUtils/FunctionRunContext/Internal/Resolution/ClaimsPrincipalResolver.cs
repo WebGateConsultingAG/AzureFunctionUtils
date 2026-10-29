@@ -1,17 +1,18 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
+using WebGate.Azure.FunctionsUtils.Internal.EasyAuth;
+using WebGate.Azure.FunctionsUtils.Internal.EntraJwt;
+using WebGate.Azure.FunctionsUtils.Internal.Environment;
 
-namespace WebGate.Azure.FunctionsUtils.Internal;
+namespace WebGate.Azure.FunctionsUtils.Internal.Resolution;
 
-internal sealed class ResolvedIdentity
-{
-    public ClaimsPrincipal? Principal { get; init; }
-    public string? UserId { get; init; }
-    public string? Upn { get; init; }
-    public IEnumerable<string> Roles { get; init; } = [];
-    public bool IsAuthenticated => !string.IsNullOrWhiteSpace(UserId);
-}
-
+/// <summary>
+/// Resolves <see cref="ClaimsPrincipal"/> and mapped identity fields from HTTP request headers.
+/// </summary>
+/// <remarks>
+/// Cloud: Easy Auth only. Local dev (<see cref="AzureFunctionsEnvironment.IsLocalDevelopment"/>):
+/// Easy Auth first, then API Bearer JWT, then SPA ID token JWT. No merging of principals.
+/// </remarks>
 internal static class ClaimsPrincipalResolver
 {
     private const string OBJECT_ID_CLAIM = "oid";
@@ -25,12 +26,15 @@ internal static class ClaimsPrincipalResolver
     private const string UNIQUE_NAME_CLAIM = "unique_name";
     private const string EMAIL_CLAIM = "email";
 
+    /// <summary>Maps request headers to user id, UPN, and roles; returns empty identity when nothing valid is found.</summary>
+    /// <param name="request">Incoming HTTP request (Easy Auth and, in local dev, Bearer JWT headers).</param>
     public static ResolvedIdentity Resolve(HttpRequest request)
     {
         var principal = EasyAuthClaimsPrincipalParser.TryParse(request);
         if (principal == null && AzureFunctionsEnvironment.IsLocalDevelopment())
         {
-            principal = BearerJwtClaimsPrincipalParser.TryParse(request);
+            principal = BearerJwtClaimsPrincipalParser.TryParse(request)
+                ?? SpaIdTokenClaimsPrincipalParser.TryParse(request);
         }
 
         if (principal == null)
