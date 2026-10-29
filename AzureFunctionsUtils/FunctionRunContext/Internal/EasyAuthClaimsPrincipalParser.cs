@@ -5,6 +5,13 @@ using Microsoft.AspNetCore.Http;
 
 namespace WebGate.Azure.FunctionsUtils.Internal;
 
+/// <summary>
+/// Parses Azure App Service Authentication / Easy Auth client principal from <c>x-ms-client-principal</c>.
+/// </summary>
+/// <remarks>
+/// The header value is Base64-encoded JSON (standard Base64 or Base64url). Invalid or missing data returns <c>null</c> (fail closed).
+/// Claim types are taken from the JSON <c>typ</c> field and must align with <see cref="ClaimsPrincipalResolver"/> (e.g. <c>oid</c>, <c>roles</c>).
+/// </remarks>
 internal static class EasyAuthClaimsPrincipalParser
 {
     private const string CLIENT_PRINCIPAL_HEADER = "x-ms-client-principal";
@@ -24,8 +31,7 @@ internal static class EasyAuthClaimsPrincipalParser
                 return null;
             }
 
-            var decoded = Convert.FromBase64String(data);
-            var json = Encoding.UTF8.GetString(decoded);
+            var json = DecodeClientPrincipalPayload(data);
             var clientPrincipal = JsonSerializer.Deserialize<ClientPrincipal>(
                 json,
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
@@ -53,6 +59,19 @@ internal static class EasyAuthClaimsPrincipalParser
         catch (JsonException)
         {
             return null;
+        }
+    }
+
+    internal static string DecodeClientPrincipalPayload(string encoded)
+    {
+        try
+        {
+            return Base64Url.DecodeToUtf8String(encoded);
+        }
+        catch (FormatException)
+        {
+            var decoded = Convert.FromBase64String(encoded);
+            return Encoding.UTF8.GetString(decoded);
         }
     }
 }

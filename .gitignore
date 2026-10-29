@@ -1,5 +1,7 @@
 AzureFunctionsUtils/bin/
 AzureFunctionsUtils/obj/
+AzureFunctionsUtils.Tests/bin/
+AzureFunctionsUtils.Tests/obj/
 .vs/
 *.user
 *.suo

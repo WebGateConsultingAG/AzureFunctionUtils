@@ -20,9 +20,11 @@ jobs:
       with:
         dotnet-version: 10.0.x
     - name: Restore dependencies
-      run: dotnet restore
+      run: dotnet restore AzureFunctionUtils.sln
     - name: Build
-      run: dotnet build --configuration Release --no-restore
+      run: dotnet build AzureFunctionUtils.sln --configuration Release --no-restore
+    - name: Test
+      run: dotnet test AzureFunctionUtils.sln --configuration Release --no-build --verbosity normal
     - name: NuGet login (OIDC)
       if: github.event_name == 'push' && github.ref == 'refs/heads/main'
       uses: NuGet/login@v1

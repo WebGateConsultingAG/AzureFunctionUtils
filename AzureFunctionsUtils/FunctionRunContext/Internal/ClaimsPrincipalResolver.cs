@@ -30,7 +30,8 @@ internal static class ClaimsPrincipalResolver
         var principal = EasyAuthClaimsPrincipalParser.TryParse(request);
         if (principal == null && AzureFunctionsEnvironment.IsLocalDevelopment())
         {
-            principal = BearerJwtClaimsPrincipalParser.TryParse(request);
+            principal = BearerJwtClaimsPrincipalParser.TryParse(request)
+                ?? SpaIdTokenClaimsPrincipalParser.TryParse(request);
         }
 
         if (principal == null)
