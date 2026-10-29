@@ -43,11 +43,26 @@ CI (`.github/workflows/dotnet.yml`): Build, Test, NuGet push to nuget.org on pus
 
 | Bereich | Ort |
 |--------|-----|
-| Public API | `FunctionRunContext/*.cs` |
-| Resolver / JWT / Easy Auth | `FunctionRunContext/Internal/` |
-| Tests | `AzureFunctionsUtils.Tests/` (`InternalsVisibleTo`) |
+| Public API | `FunctionRunContext/*.cs` (Root: `IFunctionRunContext`, `FunctionRunContext`, `UserFunctionRunContext`, `AppFunctionRunContext`) |
+| Host / Env | `FunctionRunContext/Internal/Environment/` |
+| Easy Auth | `FunctionRunContext/Internal/EasyAuth/` |
+| Local Entra JWT | `FunctionRunContext/Internal/EntraJwt/` |
+| Resolver-Pipeline | `FunctionRunContext/Internal/Resolution/` |
+| Unit-Tests | `AzureFunctionsUtils.Tests/` — spiegelt `Internal/` + Public API (`InternalsVisibleTo`) |
 
-God-Datei vermeiden: neue Auth-Zweige als **named parser** + Eintrag in `ClaimsPrincipalResolver`, nicht inline in `UserFunctionRunContext`.
+### Test-Ordner (`AzureFunctionsUtils.Tests/`)
+
+| Ordner | Namespace | Specs |
+|--------|-----------|--------|
+| `Infrastructure/` | `AzureFunctionsUtils.Tests.Infrastructure` | Env-Isolation (`EnvironmentVariablesCollection`, `EnvironmentVariableRestore`, Konstanten) |
+| `EasyAuth/` | `AzureFunctionsUtils.Tests.EasyAuth` | Easy-Auth-Parser |
+| `EntraJwt/` | `AzureFunctionsUtils.Tests.EntraJwt` | Audience-Building, JWT fail-closed / Trust |
+| `Resolution/` | `AzureFunctionsUtils.Tests.Resolution` | `ClaimsPrincipalResolver` |
+| `FunctionRunContext/` | `AzureFunctionsUtils.Tests.FunctionRunContext` | Public API (`UserFunctionRunContext.ForRequest`, …) |
+
+**Produktion (`Internal/`):** `WebGate.Azure.FunctionsUtils.Internal.{Environment|EasyAuth|EntraJwt|Resolution}` — öffentliche Typen unverändert `WebGate.Azure.FunctionsUtils`.
+
+Neue Parser: passender **Ordner** + Eintrag in `Resolution/ClaimsPrincipalResolver` — nicht in `UserFunctionRunContext`. **Eine Klasse (bzw. ein Enum/Interface) pro `.cs`-Datei.**
 
 ## Commit-Gate
 

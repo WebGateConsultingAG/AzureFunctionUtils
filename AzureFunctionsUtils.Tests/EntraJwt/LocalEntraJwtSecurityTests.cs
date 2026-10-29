@@ -1,8 +1,11 @@
+using AzureFunctionsUtils.Tests.Infrastructure;
 using Microsoft.AspNetCore.Http;
-using WebGate.Azure.FunctionsUtils.Internal;
+using WebGate.Azure.FunctionsUtils.Internal.EntraJwt;
+using WebGate.Azure.FunctionsUtils.Internal.Environment;
+using WebGate.Azure.FunctionsUtils.Internal.Resolution;
 using Xunit;
 
-namespace AzureFunctionsUtils.Tests;
+namespace AzureFunctionsUtils.Tests.EntraJwt;
 
 /// <summary>
 /// Fail-closed and trust-boundary tests for local JWT parsers (no live OIDC calls).

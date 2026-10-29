@@ -1,4 +1,4 @@
-namespace WebGate.Azure.FunctionsUtils.Internal;
+namespace WebGate.Azure.FunctionsUtils.Internal.Environment;
 
 /// <summary>
 /// Reads Entra-related environment variables for local JWT validation (shared by API and SPA ID token parsers).
@@ -18,18 +18,21 @@ internal static class LocalEntraJwtEnvironment
     /// <summary>SPA application (client) id; ID token audience must match when using SPA local path.</summary>
     internal const string SpaClientIdVariable = "FUNCTIONS_UTILS_AAD_SPA_CLIENT_ID";
 
+    /// <summary>Process env <see cref="TenantIdVariable"/>; null or whitespace when unset.</summary>
     internal static string? GetTenantId()
     {
-        return Environment.GetEnvironmentVariable(TenantIdVariable, EnvironmentVariableTarget.Process);
+        return global::System.Environment.GetEnvironmentVariable(TenantIdVariable, EnvironmentVariableTarget.Process);
     }
 
+    /// <summary>Process env <see cref="ApiAudienceVariable"/>; null or whitespace when unset.</summary>
     internal static string? GetApiAudience()
     {
-        return Environment.GetEnvironmentVariable(ApiAudienceVariable, EnvironmentVariableTarget.Process);
+        return global::System.Environment.GetEnvironmentVariable(ApiAudienceVariable, EnvironmentVariableTarget.Process);
     }
 
+    /// <summary>Process env <see cref="SpaClientIdVariable"/>; null or whitespace when unset.</summary>
     internal static string? GetSpaClientId()
     {
-        return Environment.GetEnvironmentVariable(SpaClientIdVariable, EnvironmentVariableTarget.Process);
+        return global::System.Environment.GetEnvironmentVariable(SpaClientIdVariable, EnvironmentVariableTarget.Process);
     }
 }

@@ -61,3 +61,14 @@ JWT validation uses `MapInboundClaims = false` so short Entra claim names match 
 ## Application context
 
 `AppFunctionRunContext` bypasses HTTP entirely: caller supplies application id and role array (timers, internal jobs, tests).
+
+## Source layout (`FunctionRunContext/Internal/`)
+
+All types stay in namespace `WebGate.Azure.FunctionsUtils.Internal.*` matching the folder (public API remains `WebGate.Azure.FunctionsUtils`).
+
+| Folder | Responsibility |
+|--------|----------------|
+| `Environment/` | Local-dev flag (`AzureFunctionsEnvironment`) and Entra env vars for JWT (`LocalEntraJwtEnvironment`) |
+| `EasyAuth/` | `EasyAuthClaimsPrincipalParser`, `ClientPrincipal`, `ClientPrincipalClaim`, `Base64Url` |
+| `EntraJwt/` | Shared Entra JWT validation, API Bearer and SPA ID-token entry parsers |
+| `Resolution/` | `ClaimsPrincipalResolver`, `ResolvedIdentity` |

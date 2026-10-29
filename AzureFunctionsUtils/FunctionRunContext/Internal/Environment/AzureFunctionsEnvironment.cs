@@ -1,5 +1,6 @@
-namespace WebGate.Azure.FunctionsUtils.Internal;
+namespace WebGate.Azure.FunctionsUtils.Internal.Environment;
 
+/// <summary>Feature flags and environment probes for Azure Functions host configuration.</summary>
 internal static class AzureFunctionsEnvironment
 {
     private const string LOCAL_DEVELOPMENT_VARIABLE = "FUNCTIONS_UTILS_LOCAL_DEVELOPMENT";
@@ -11,7 +12,7 @@ internal static class AzureFunctionsEnvironment
     /// </summary>
     public static bool IsLocalDevelopment()
     {
-        var value = Environment.GetEnvironmentVariable(LOCAL_DEVELOPMENT_VARIABLE, EnvironmentVariableTarget.Process);
+        var value = global::System.Environment.GetEnvironmentVariable(LOCAL_DEVELOPMENT_VARIABLE, EnvironmentVariableTarget.Process);
         return string.Equals(value, "true", StringComparison.OrdinalIgnoreCase);
     }
 }

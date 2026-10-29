@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace WebGate.Azure.FunctionsUtils.Internal;
+namespace WebGate.Azure.FunctionsUtils.Internal.EasyAuth;
 
 /// <summary>JWT/Easy Auth base64url decoding (no padding in input).</summary>
 internal static class Base64Url

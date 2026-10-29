@@ -1,9 +1,4 @@
-namespace AzureFunctionsUtils.Tests;
-
-internal static class AzureFunctionsEnvironmentTests
-{
-    internal const string LocalDevelopmentVariable = "FUNCTIONS_UTILS_LOCAL_DEVELOPMENT";
-}
+namespace AzureFunctionsUtils.Tests.Infrastructure;
 
 /// <summary>Restores a process environment variable when disposed (test isolation).</summary>
 internal sealed class EnvironmentVariableRestore : IDisposable

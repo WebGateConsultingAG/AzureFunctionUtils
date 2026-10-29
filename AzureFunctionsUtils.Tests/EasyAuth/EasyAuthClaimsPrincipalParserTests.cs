@@ -1,10 +1,11 @@
+using AzureFunctionsUtils.Tests.Infrastructure;
 using System.Text;
 using Microsoft.AspNetCore.Http;
-using WebGate.Azure.FunctionsUtils;
-using WebGate.Azure.FunctionsUtils.Internal;
+using WebGate.Azure.FunctionsUtils.Internal.EasyAuth;
+using WebGate.Azure.FunctionsUtils.Internal.Resolution;
 using Xunit;
 
-namespace AzureFunctionsUtils.Tests;
+namespace AzureFunctionsUtils.Tests.EasyAuth;
 
 [Collection(nameof(EnvironmentVariablesCollection))]
 public class EasyAuthClaimsPrincipalParserTests
@@ -33,38 +34,5 @@ public class EasyAuthClaimsPrincipalParserTests
 
         Assert.NotNull(principal);
         Assert.Equal("oid-easy-auth", resolved.UserId);
-    }
-}
-
-[Collection(nameof(EnvironmentVariablesCollection))]
-public class ClaimsPrincipalResolverTests
-{
-    [Fact]
-    public void Resolve_withoutAuthHeaders_returnsUnauthenticatedIdentity()
-    {
-        using var local = new EnvironmentVariableRestore(
-            AzureFunctionsEnvironmentTests.LocalDevelopmentVariable,
-            null);
-
-        var context = new DefaultHttpContext();
-        var resolved = ClaimsPrincipalResolver.Resolve(context.Request);
-
-        Assert.Null(resolved.Principal);
-        Assert.False(resolved.IsAuthenticated);
-        Assert.True(string.IsNullOrWhiteSpace(resolved.UserId));
-    }
-}
-
-public class UserFunctionRunContextTests
-{
-    [Fact]
-    public void ForRequest_returnsSameInstanceFromHttpContextItems()
-    {
-        var context = new DefaultHttpContext();
-
-        var first = UserFunctionRunContext.ForRequest(context.Request);
-        var second = UserFunctionRunContext.ForRequest(context.Request);
-
-        Assert.Same(first, second);
     }
 }

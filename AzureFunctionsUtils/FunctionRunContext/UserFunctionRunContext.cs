@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
-using WebGate.Azure.FunctionsUtils.Internal;
+using WebGate.Azure.FunctionsUtils.Internal.Environment;
+using WebGate.Azure.FunctionsUtils.Internal.Resolution;
 
 namespace WebGate.Azure.FunctionsUtils;
 
